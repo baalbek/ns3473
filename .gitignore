@@ -1,0 +1,4 @@
+*.swp
+tmp/
+*.ods#
+dist/
