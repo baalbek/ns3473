@@ -34,7 +34,8 @@ data RebarCollection =
 totalSteelArea :: RebarCollection
                   -> Double -- ^ [mm2]
 totalSteelArea r@FloorRebars { rebar,cc } = steelArea r 1000.0
-totalSteelArea r@SingleRowBeamRebars { rebar,amount } = amount * (steelAreaRod rebar)
+totalSteelArea SingleRowBeamRebars { rebar,amount } = amount * (steelAreaRod rebar)
+totalSteelArea MultiRowBeamRebars { rebar,amount } = amount * (steelAreaRod rebar)
 
 -- | Area of single rebar
 steelAreaRod :: Rebar 
@@ -52,6 +53,8 @@ steelArea FloorRebars { rebar,cc } areaWidth = numRebars * (steelAreaRod rebar)
 dsec :: RebarCollection
        -> Double
 dsec FloorRebars { rebar } = diam rebar
+dsec MultiRowBeamRebars { rebar,rows,vdist } = 
+    ((rows - 1) * vdist) + (rows * (diam rebar))
 
 -- | Returns distance from bottom concrete to centroid rebar collection,
 -- i.e. returns h - d
@@ -59,5 +62,6 @@ ddist :: RebarCollection
          -> Double -- ^ [mm]
 ddist FloorRebars { rebar,cover } = cover + ((diam rebar) * 0.5)
 ddist SingleRowBeamRebars { rebar,cover } = cover + ((diam rebar) * 0.5)
+ddist r@MultiRowBeamRebars { cover } = cover + ((dsec r) * 0.5)
 
 
