@@ -123,15 +123,17 @@ minCcLinks beam = minimum [cc,500,0.6*h06]
           
 
 -- | Dimensjonerende senteravstand bøyler link
--- gitt skjærkraft v 
+-- gitt skjærkraft v' = v minus 
+-- tverrsnittets skjærkraftkapasitet
 ccLinks :: Beam 
            -> C.StaticMoment -- [kNm]
            -> C.Shear        -- [kN]
            -> Maybe Double         -- [mm]
-ccLinks beam m v | v > 0 = Just cc
+ccLinks beam m v | v' > 0 = Just cc
                  | otherwise = Nothing
     where asl = asLink (links beam)
           z' = calcZ beam m
-          cc = C.fsd * asl * z' / (v * 1000.0) 
+          v' = v - (vcd beam)
+          cc = C.fsd * asl * z' / (v' * 1000.0) 
           
 
