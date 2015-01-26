@@ -27,6 +27,13 @@ data RebarCollection =
         cc :: Double,   -- ^ Vertical center distance between rebars [mm]
         cover :: Double -- ^ Overdekning [mm]
     }
+    | SingleWallRebars {
+        rebar :: Rebar
+    }
+    | DoubleWallRebars {
+        rebar :: Rebar,
+        cover :: Double     -- ^ Overdekning [mm]
+    }
     | ColumnRebars {
     } deriving Show
 

@@ -6,7 +6,7 @@ data Concrete  = Concrete {
                             ftd :: Double,
                             fcn :: Double,
                             fcd :: Double,
-                            ee  :: Double,
+                            ee  :: Double,    -- ^ Emodulus [N/mm2]
                             mr  :: Double,    -- ^ Used in calculating ConcreteProfile::mcd = mr * b * d * d * fcd
                             alphad :: Double  -- ^ Used in calculating ConcreteProfile::z
                             } deriving Show
