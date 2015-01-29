@@ -8,6 +8,8 @@ import qualified NS3473.Rebars as R
 
 data WallType = External | Interior deriving (Show,Eq)
 
+data Orientation = Vertical | Horizontal deriving (Show,Eq)
+
 data Wall = Wall {
                 t           :: Double,     -- ^ veggtykkelse [mm]
                 h           :: Double,     -- ^ vegghøyde [mm]
@@ -37,35 +39,37 @@ rodDiam :: Wall
            -> Double -- ^ [mm]
 rodDiam = R.diam . R.rebar . rebars
            
-steelAreaHorizRod :: R.RebarCollection 
-                -> Double   -- ^ [mm2]
-steelAreaHorizRod = R.steelAreaRod . R.horizRebar 
+steelAreaHorizRod :: Wall 
+                     -> Double   -- ^ [mm2]
+steelAreaHorizRod = R.steelAreaRod . R.horizRebar . rebars
                 
-steelAreaVertRod :: R.RebarCollection 
+steelAreaVertRod :: Wall 
                     -> Double   -- ^ [mm2]
-steelAreaVertRod = R.steelAreaRod . R.vertRebar 
+steelAreaVertRod = R.steelAreaRod . R.vertRebar . rebars
 
+-- | Min steel area rebars, vertical or horizontal, NS 3473 18.5.2
 minRebars :: Wall 
-             -> Double   -- ^ Factor due to wall type etc
-             -> Double   -- ^ Concrete section area [mm2]
-             -> (R.RebarCollection -> Double) -- ^ Steel area rod function
+             -> Orientation 
              -> Double   -- ^ Number of rebars given rebar diam from wall
-minRebars wall f ac rodAreaFn = reqArea / rar
-    where rar = rodAreaFn $ rebars wall
-          ftk = M.ftk $ conc wall
+minRebars wall ori = reqArea 
+    where ftk = M.ftk $ conc wall
+          ac | ori == Vertical = X.ac wall
+             | otherwise = (t wall) * (h wall)
+          f | ori == Vertical = 0.3
+            | wtype wall == External = 0.6
+            | otherwise = 0.3
           reqArea = ac * f * ftk / C.fsk
           -- reqArea = (X.ac wall) * f * ftk / C.fsk
 
--- | Minimum horiozontal rebars, NS 3473 18.5.2
-minHorizRebars :: Wall 
-                  -> Double   -- ^ Horizontal center distance of rebars given rebar diam from wall
-minHorizRebars wall = (h wall) / (minRebars wall f ac steelAreaHorizRod)
-    where f | wtype wall == External = 0.6
-            | otherwise = 0.3
-          ac = (t wall) * (h wall)
+-- | Max center distance rebars, vertical or horizontal, NS 3473 18.5.2
+maxCcRebars :: Wall 
+               -> Orientation 
+               -> Double   -- ^ Horizontal center distance of rebars given rebar diam from wall
+maxCcRebars wall ori = distConc * (rodarFn wall) / reqar 
+    where reqar = minRebars wall ori
+          rodarFn | ori == Horizontal = steelAreaHorizRod 
+                  | otherwise = steelAreaVertRod 
+          distConc | ori == Horizontal = h wall
+                   | otherwise = 1000.0
 
--- | Minimum vertical rebars, NS 3473 18.5.2
-minVerticalRebars :: Wall
-                     -> Double   -- ^ Vertical center distance of rebars given rebar diam from wall
-minVerticalRebars wall = 1000.0 / (minRebars wall 0.3 ac steelAreaVertRod)
-    where ac = X.ac wall
+

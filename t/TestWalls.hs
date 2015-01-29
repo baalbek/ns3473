@@ -21,6 +21,8 @@ rebar = R.DoubleWallRebars rebar12 100 rebar10 100 40
 testWalls = test [
                 "W1" ~: do 
                     let wall = W.Wall 200 2400 conc rebar W.External 1.0
-                    assertEqual "[W1a] min cc horizontal rebars" 128.3 (ro2dec (W.minHorizRebars wall) 1)
-                    assertEqual "[W1a] min amount vertical rebars" 369.6 (ro2dec (W.minVerticalRebars wall) 1)
+                    assertEqual "[W1a] min area horizontal rebars" 1468.8 (ro2dec (W.minRebars wall W.Horizontal) 1)
+                    assertEqual "[W1b] min area vertical rebars" 306.0 (ro2dec (W.minRebars wall W.Vertical) 1)
+                    assertEqual "[W1c] max cc horizontal rebars" 128.3 (ro2dec (W.maxCcRebars wall W.Horizontal) 1)
+                    assertEqual "[W1c] max cc vertical rebars" 369.6 (ro2dec (W.maxCcRebars wall W.Vertical) 1)
                 ]
