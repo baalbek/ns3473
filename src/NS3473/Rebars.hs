@@ -30,9 +30,14 @@ data RebarCollection =
     | SingleWallRebars {
         rebar :: Rebar
     }
+    -- | The rebar is laid out on both sides with center distance = cc.
+    --   I.e. the total number of rebars pr. meter is: 2 * (1000.0 / cc)
     | DoubleWallRebars {
-        rebar :: Rebar,
-        cover :: Double     -- ^ Overdekning [mm]
+        vertRebar :: Rebar,  -- ^ Vertical rebars,
+        ccVert :: Double,    -- ^ Vertical center distance 
+        horizRebar :: Rebar, -- ^ Horizontal rebars,
+        ccHoriz :: Double,    -- ^ Horizontal center distance 
+        cover :: Double      -- ^ Overdekning [mm]
     }
     | ColumnRebars {
     } deriving Show
