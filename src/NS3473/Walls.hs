@@ -32,7 +32,7 @@ instance X.Bucklable Wall where
     tx w     = (t w)
     calcD    = undefined
     lk w     = (h w) * (lkf w)
-    wt w     = 0.02 
+    wt w     = (1000.0 / (ccVertRod w)) * (steelAreaVertRod w)
     
 -- | Diameter of rebar 
 rodDiam :: Wall 
@@ -47,6 +47,10 @@ steelAreaVertRod :: Wall
                     -> Double   -- ^ [mm2]
 steelAreaVertRod = R.steelAreaRod . R.vertRebar . rebars
 
+ccVertRod :: Wall 
+             -> Double   -- ^ [mm2]
+ccVertRod = R.ccVert . rebars
+
 -- | Min steel area rebars, vertical or horizontal, NS 3473 18.5.2
 minRebars :: Wall 
              -> Orientation 
@@ -55,21 +59,27 @@ minRebars wall ori = reqArea
     where ftk = M.ftk $ conc wall
           ac | ori == Vertical = X.ac wall
              | otherwise = (t wall) * (h wall)
-          f | ori == Vertical = 0.3
-            | wtype wall == External = 0.6
+          f | wtype wall == External = 0.6
             | otherwise = 0.3
           reqArea = ac * f * ftk / C.fsk
-          -- reqArea = (X.ac wall) * f * ftk / C.fsk
 
 -- | Max center distance rebars, vertical or horizontal, NS 3473 18.5.2
 maxCcRebars :: Wall 
                -> Orientation 
                -> Double   -- ^ Horizontal center distance of rebars given rebar diam from wall
-maxCcRebars wall ori = distConc * (rodarFn wall) / reqar 
+maxCcRebars wall ori = min 300.0 cc 
     where reqar = minRebars wall ori
           rodarFn | ori == Horizontal = steelAreaHorizRod 
                   | otherwise = steelAreaVertRod 
           distConc | ori == Horizontal = h wall
                    | otherwise = 1000.0
+          rebarAmountAdjustment' = rebarAmountAdjustment $ rebars wall
+          cc = rebarAmountAdjustment' * distConc * (rodarFn wall) / reqar 
 
 
+-- | Factor for adjusting the total number
+-- of rebar pr length
+rebarAmountAdjustment :: R.RebarCollection
+                         -> Double 
+rebarAmountAdjustment (R.SingleWallRebars _ _ _ _ _) = 1.0
+rebarAmountAdjustment (R.DoubleWallRebars _ _ _ _ _) = 2.0
