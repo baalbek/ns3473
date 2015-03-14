@@ -14,7 +14,7 @@ class Bucklable a where
     tx       :: a -> Double -- ^ Betongtverrsnittets tykkelse [mm]
     calcD    :: a -> Double -- ^ Avstand armering / betongtverrsnitt topp [mm]
     lk       :: a -> Double -- ^ Knekklengde [mm]
-    wt       :: a -> Double -- ^ Armeringens vektet andel (for en side) av betongtverrsnittet [mm2]
+    wt       :: a -> Double -- ^ Armeringens vektet totale andel (begge sider) av betongtverrsnittet [mm2]
 
 -- | Kurveskarens n faktor [a -> kN] 
 nf :: Bucklable a => a -> C.Load -> Double
@@ -42,6 +42,13 @@ e0 n m | n > 0.0 = m' / n'
     where n' = n * 1000.0
           m' = m * 10**6
 
+-- | Total 1. ordens eksentrisitet
+e1 :: Bucklable a => a 
+                     -> C.Load         -- ^ [kN]
+                     -> C.StaticMoment -- ^ [kNm]
+                     -> Double         -- ^ [mm]
+e1 bux n m = (e0 n m) + (ns12_2_3 bux)
+
  -- | Andre-ordens forskyvninger, elastiske forskyvninger, [a -> kN]
 ae :: Bucklable a => a -> C.Load -> Double 
 ae bux p = (h * h) / (10.0 * r)
@@ -66,15 +73,6 @@ creep bux n m = (e1l*0.8*creepfactor)/(n' - 1 - (0.4*creepfactor))
           n' = nel/(n*1000) -- n omgjøres til N siden nel kommer ut i N 
           e1l = (e0 n m) + (ns12_2_3 bux)
 
-{-
--- | Kalkuler vektet (med materialfasthet) andel 
--- armeringtverrsnitt/betongtverrsnitt for en side av tverrsnittet,
--- dvs resultat * 2 = total andel armering 
-calcW :: Bucklable a => a 
-                        -> Double -- ^ Armering for en side av tverrsnittet [mm2]
-                        -> RebarFraction 
-calcW bux rebar = (C.fsd * rebar) / ((ac bux) * (fcd bux))
--}
 
 -- | EI for tverrsnitt
 calcEI :: Bucklable a => a 
@@ -92,7 +90,9 @@ ns12_2_3 bux = maximum [e1, e2, e3]
           -- e4 = (hx bux) / 30.0
 
 -- | Nødvendig armeringsmengde git armeringsandel fra kurveskare
-calcSteel :: Bucklable a => a -> RebarFraction -> Double
+calcSteel :: Bucklable a => a 
+                            -> RebarFraction 
+                            -> Double
 calcSteel bux w = w * (ac bux) * (fcd bux) / C.fsd
 
 -- | Knekklengde lk (mm)/ treghetsradius, i
@@ -102,14 +102,25 @@ lambda bux = (lk bux) / i
 
 -- | Sjekke om kan se bort fra kryp eller 2. ordens eksentrisitet
 --   => lambdaf < 10.0
-lambdaF :: Bucklable a => a -> 
-                          C.Load -> -- ^ [kN]
-                          RebarFraction -> -- ^ armeringsforhold (mywt) (se kurveskare)
-                          Double
-lambdaF bux p wt = a * (sqrt ( b / (1 + (5*wt))))
+lambdaF :: Bucklable a => a 
+                          -> C.Load  -- ^ [kN]
+                          -- RebarFraction -> -- ^ armeringsforhold (mywt) (se kurveskare)
+                          -> Double
+lambdaF bux p = a * (sqrt ( b / (1 + (5*wt'))))
     where a = lambda bux 
           b = nf bux p
+          wt' = wt bux
 
 -- | Default armeringsmengdeforhold, as + as' = 1.5%
 defwt :: Bucklable a => a -> RebarFraction 
 defwt wall = 0.015 * C.fsd / (fcd wall)
+
+{-
+-- | Kalkuler vektet (med materialfasthet) andel 
+-- armeringtverrsnitt/betongtverrsnitt for en side av tverrsnittet,
+-- dvs resultat * 2 = total andel armering 
+calcW :: Bucklable a => a 
+                        -> Double -- ^ Armering for en side av tverrsnittet [mm2]
+                        -> RebarFraction 
+calcW bux rebar = (C.fsd * rebar) / ((ac bux) * (fcd bux))
+-}

@@ -10,21 +10,23 @@ data WallType = External | Interior deriving (Show,Eq)
 
 data Orientation = Vertical | Horizontal deriving (Show,Eq)
 
-data Wall = Wall {
-                t           :: Double,     -- ^ veggtykkelse [mm]
-                h           :: Double,     -- ^ vegghøyde [mm]
-                conc        :: M.Concrete, -- ^ Betongkvalitet
-                rebars      :: R.RebarCollection,    -- ^ Armering
-                wtype       :: WallType,   -- ^ Inner/yttervegg
-                lkf         :: Double      -- ^ Knekklengdefaktor
-            }
-        deriving Show
+data Wall = 
+    Wall {
+        t           :: Double,     -- ^ veggtykkelse [mm]
+        h           :: Double,     -- ^ vegghøyde [mm]
+        conc        :: M.Concrete, -- ^ Betongkvalitet
+        rebars      :: R.RebarCollection,    -- ^ Armering
+        wtype       :: WallType,   -- ^ Inner/yttervegg
+        lkf         :: Double      -- ^ Knekklengdefaktor
+    }
+    deriving Show
 
 instance X.Bucklable Wall where
     ac w     = (t w) * 1000.0 
     ic w     = 1000.0 * ((t w) ** 3) / 12.0
     fcd      = M.fcd . conc 
     emodulus = M.ee . conc 
+    ----------------- hx --------------
     hx w     = let r = rebars w
                    c' = R.cover r
                    d' = (R.diam . R.rebar) r
@@ -45,7 +47,7 @@ steelAreaHorizRod = R.steelAreaRod . R.horizRebar . rebars
                 
 steelAreaVertRod :: Wall 
                     -> Double   -- ^ [mm2]
-steelAreaVertRod = R.steelAreaRod . R.vertRebar . rebars
+steelAreaVertRod = R.steelAreaRod . R.rebar . rebars
 
 ccVertRod :: Wall 
              -> Double   -- ^ [mm2]

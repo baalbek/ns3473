@@ -28,7 +28,7 @@ data RebarCollection =
         cover :: Double -- ^ Overdekning [mm]
     }
     | SingleWallRebars {
-        vertRebar :: Rebar,  -- ^ Vertical rebars,
+        rebar :: Rebar,  -- ^ Vertical rebars,
         ccVert :: Double,    -- ^ Vertical center distance 
         horizRebar :: Rebar, -- ^ Horizontal rebars,
         ccHoriz :: Double,    -- ^ Horizontal center distance 
@@ -37,13 +37,16 @@ data RebarCollection =
     -- | The rebar is laid out on both sides with center distance = cc.
     --   I.e. the total number of rebars pr. meter is: 2 * (1000.0 / cc)
     | DoubleWallRebars {
-        vertRebar :: Rebar,  -- ^ Vertical rebars,
+        rebar :: Rebar,  -- ^ Vertical rebars,
         ccVert :: Double,    -- ^ Vertical center distance 
         horizRebar :: Rebar, -- ^ Horizontal rebars,
         ccHoriz :: Double,    -- ^ Horizontal center distance 
         cover :: Double      -- ^ Overdekning [mm]
     }
     | ColumnRebars {
+        rebar :: Rebar,
+        amount :: Double,   -- ^ Amount of rebars on one column side
+        cover :: Double     -- ^ Cover [mm]
     } deriving Show
 
 -- | Calculates total steel area for BeamRebars and ColumnRebars, or total pr 1000 mm for FloorRebars
@@ -51,6 +54,7 @@ totalSteelArea :: RebarCollection
                   -> Double -- ^ [mm2]
 totalSteelArea r@FloorRebars { rebar,cc } = steelArea r 1000.0
 totalSteelArea SingleRowBeamRebars { rebar,amount } = amount * (steelAreaRod rebar)
+totalSteelArea ColumnRebars { rebar,amount } = amount * (steelAreaRod rebar)
 totalSteelArea MultiRowBeamRebars { rebar,amount } = amount * (steelAreaRod rebar)
 
 -- | Area of single rebar
@@ -69,6 +73,7 @@ steelArea FloorRebars { rebar,cc } areaWidth = numRebars * (steelAreaRod rebar)
 dsec :: RebarCollection
        -> Double
 dsec FloorRebars { rebar } = diam rebar
+dsec ColumnRebars { rebar } = diam rebar
 dsec MultiRowBeamRebars { rebar,rows,vdist } = 
     ((rows - 1) * vdist) + (rows * (diam rebar))
 
@@ -78,6 +83,7 @@ ddist :: RebarCollection
          -> Double -- ^ [mm]
 ddist FloorRebars { rebar,cover } = cover + ((diam rebar) * 0.5)
 ddist SingleRowBeamRebars { rebar,cover } = cover + ((diam rebar) * 0.5)
+ddist ColumnRebars { rebar,cover } = cover + ((diam rebar) * 0.5)
 ddist r@MultiRowBeamRebars { cover } = cover + ((dsec r) * 0.5)
 
 
