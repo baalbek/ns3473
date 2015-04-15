@@ -11,6 +11,7 @@ class Bucklable a where
     fcd      :: a -> Double -- ^ Betongens fcd [N/mm2]
     emodulus :: a -> Double -- ^ Betongens emodul [N/mm2]
     hx       :: a -> Double -- ^ Distanse mellom armeringslag [mm]
+    hk       :: a -> Double -- ^ Bredde/tykkelse i knekningsretning [mm]
     tx       :: a -> Double -- ^ Betongtverrsnittets tykkelse [mm]
     calcD    :: a -> Double -- ^ Avstand armering / betongtverrsnitt topp [mm]
     lk       :: a -> Double -- ^ Knekklengde [mm]
@@ -23,6 +24,12 @@ nf bux p = (p * 1000.0) / (ac' * fcd')
           fcd' = fcd bux
 
 -- | Kurveskarens m faktor [a -> kN -> kNm] 
+factM :: Bucklable a => a -> C.StaticMoment -> Double
+factM bux m = (m * 1000000.0) / (ac' * h * fcd') 
+    where h = hk bux
+          ac' = ac bux
+          fcd' = fcd bux
+{-
 factM :: Bucklable a => a -> C.Load -> C.StaticMoment -> Double
 factM bux n m = (mf * 1000000.0) / (ac' * h * fcd')
     where mf | n > 0.0 = n * 1000.0 * (eTot n m)
@@ -30,6 +37,7 @@ factM bux n m = (mf * 1000000.0) / (ac' * h * fcd')
           h = hx bux
           ac' = ac bux
           fcd' = fcd bux
+-}
 
 -- | Total eksentrisitet [kN -> kNm] 
 eTot :: C.Load -> C.StaticMoment -> Double
@@ -69,7 +77,7 @@ creep bux n m = (e1l*0.8*creepfactor)/(n' - 1 - (0.4*creepfactor))
     where nel = pi**2 * ei / lk2 
           lk2 = (lk bux)**2
           ei = calcEI bux
-          creepfactor = 2.5
+          creepfactor = 2
           n' = nel/(n*1000) -- n omgjøres til N siden nel kommer ut i N 
           e1l = (e0 n m) + (ns12_2_3 bux)
 
@@ -83,10 +91,10 @@ calcEI bux = eil -- ^ For rektangulært tverrsnit, Røhne/Vangestad s. 191
 -- | Utilsiktet eksentrisitet (ea), NS 12.2.3
 --   og minste tillatte eksentrisitet, NS 12.1.2
 ns12_2_3 :: Bucklable a => a -> Double
-ns12_2_3 bux = maximum [e1, e2, e3]
-    where e1 = (lk bux) / 300.0
-          e2 = (tx bux) / 30.0 
-          e3 = 20.0
+ns12_2_3 bux = maximum [ex1, ex2, ex3]
+    where ex1 = (lk bux) / 300.0
+          ex2 = (tx bux) / 30.0 
+          ex3 = 20.0
           -- e4 = (hx bux) / 30.0
 
 -- | Nødvendig armeringsmengde git armeringsandel fra kurveskare
@@ -101,7 +109,7 @@ lambda bux = (lk bux) / i
     where i = sqrt ((ic bux) / (ac bux))
 
 -- | Sjekke om kan se bort fra kryp eller 2. ordens eksentrisitet
---   => lambdaf < 10.0
+--   => lambdaf < 10.0, Røhne/Vangestad s. 204
 lambdaF :: Bucklable a => a 
                           -> C.Load  -- ^ [kN]
                           -- RebarFraction -> -- ^ armeringsforhold (mywt) (se kurveskare)
