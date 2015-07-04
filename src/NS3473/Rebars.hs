@@ -11,7 +11,7 @@ data RebarCollection =
     SingleRowBeamRebars {
         rebar :: Rebar,
         amount :: Double,   -- ^ Total amount of rebars
-        cover :: Double     -- ^ Overdekning [mm]
+        cover :: Double     -- ^ Overdekning [mm] + diameter bøyler
     }
     -- | Rebars as laid out in beams with multiple rows
     | MultiRowBeamRebars {
@@ -19,10 +19,10 @@ data RebarCollection =
         amount :: Double,  -- ^ Total amount of rebars
         rows :: Double,    -- ^ Number of rows the amount is distributed on 
         vdist :: Double,    -- ^ Vertical distance between rows 
-        cover :: Double -- ^ Overdekning [mm]
+        cover :: Double -- ^ Cover [mm] including diameter of links
     } 
     -- | Rebars as laid out in floors and foundations 
-    | FloorRebars {
+    | PlateRebars {
         rebar :: Rebar,
         cc :: Double,   -- ^ Vertical center distance between rebars [mm]
         cover :: Double -- ^ Overdekning [mm]
@@ -49,10 +49,10 @@ data RebarCollection =
         cover :: Double     -- ^ Cover [mm]
     } deriving Show
 
--- | Calculates total steel area for BeamRebars and ColumnRebars, or total pr 1000 mm for FloorRebars
+-- | Calculates total steel area for BeamRebars and ColumnRebars, or total pr 1000 mm for PlateRebars
 totalSteelArea :: RebarCollection
                   -> Double -- ^ [mm2]
-totalSteelArea r@FloorRebars { rebar,cc } = steelArea r 1000.0
+totalSteelArea r@PlateRebars { rebar,cc } = steelArea r 1000.0
 totalSteelArea SingleRowBeamRebars { rebar,amount } = amount * (steelAreaRod rebar)
 totalSteelArea ColumnRebars { rebar,amount } = amount * (steelAreaRod rebar)
 totalSteelArea MultiRowBeamRebars { rebar,amount } = amount * (steelAreaRod rebar)
@@ -66,13 +66,13 @@ steelAreaRod Rebar { diam } = (diam * 0.5)**2 * pi
 steelArea :: RebarCollection
              -> Double -- ^ Width of area 
              -> Double -- ^ [mm2]
-steelArea FloorRebars { rebar,cc } areaWidth = numRebars * (steelAreaRod rebar) 
+steelArea PlateRebars { rebar,cc } areaWidth = numRebars * (steelAreaRod rebar) 
     where numRebars = areaWidth / cc
 
 -- | Returns height of rebars that occupies d, that is total vertical heigth of rebar area
 dsec :: RebarCollection
        -> Double
-dsec FloorRebars { rebar } = diam rebar
+dsec PlateRebars { rebar } = diam rebar
 dsec ColumnRebars { rebar } = diam rebar
 dsec MultiRowBeamRebars { rebar,rows,vdist } = 
     ((rows - 1) * vdist) + (rows * (diam rebar))
@@ -81,7 +81,7 @@ dsec MultiRowBeamRebars { rebar,rows,vdist } =
 -- i.e. returns h - d
 ddist :: RebarCollection
          -> Double -- ^ [mm]
-ddist FloorRebars { rebar,cover } = cover + ((diam rebar) * 0.5)
+ddist PlateRebars { rebar,cover } = cover + ((diam rebar) * 0.5)
 ddist SingleRowBeamRebars { rebar,cover } = cover + ((diam rebar) * 0.5)
 ddist ColumnRebars { rebar,cover } = cover + ((diam rebar) * 0.5)
 ddist r@MultiRowBeamRebars { cover } = cover + ((dsec r) * 0.5)

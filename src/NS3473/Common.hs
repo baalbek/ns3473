@@ -2,6 +2,7 @@ module NS3473.Common where
 
 import qualified NS3473.Utils as U
 
+esk = 200000.0
 fsk = 500.0
 fsd = 400.0
 gamc = 1.4 -- betongens materialkoeffisient

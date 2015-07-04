@@ -7,6 +7,15 @@ import qualified NS3473.Rebars as R
 
 newtype Link = Link { diam :: Double } deriving Show
 
+data DeflectionContext = 
+    DeflectionContext { 
+        xi :: Double,      -- ^ Factor calculated from een, rho and xiFactor -> look-up in table
+        beamLen :: Double  -- ^ Beam span width [mm]
+    } deriving Show
+        
+
+        
+
 data Beam = 
     RectBeam {
         beamW  :: Double,               -- ^ Tverrsnittsbredde
@@ -26,7 +35,51 @@ defaultBeam :: Double     -- ^ Bjelkebredde   [mm]
 defaultBeam w h d numRebars = RectBeam w h myConc myRebar (Link 8)
     where myRebar = R.SingleRowBeamRebars (R.Rebar d) numRebars 25
           myConc = M.newConc "35" 
-         
+
+type EeFn = (M.Concrete -> Double)
+
+----------------------------------------------------------------------------------------
+------------------------------------- Deflections -------------------------------------- 
+----------------------------------------------------------------------------------------
+--
+-- | Ratio of emodulus of concrete to emodulus of steel
+een :: EeFn -> Beam -> Double
+een ee RectBeam { conc } = C.esk / (ee conc) 
+
+-- | Ratio of concrete area to steel area of tensile rebars
+rho :: Beam -> Double
+rho beam = let ac = (beamW beam) * (calcD beam) 
+               steel = R.totalSteelArea (rebars beam) in
+            steel / ac
+
+-- | een * rho
+xiFact :: EeFn
+          -> Beam 
+          -> Double 
+xiFact ee beam = (een ee beam) * (rho beam) 
+
+-- | EI for calculating deflections
+ei :: Beam 
+      -> DeflectionContext
+      -> Double 
+ei beam DeflectionContext { xi } = 
+    let steel = R.totalSteelArea (rebars beam)
+        d = calcD beam in 
+    C.esk * steel * d * d * xi 
+
+deflection :: Beam 
+              -> DeflectionContext
+              -> C.StaticMoment           -- ^ Moment [kNm]
+              -> Double
+deflection beam defCtx m = 
+    let m' = m * 1000000.0 
+        bl = beamLen defCtx in
+    m' * bl * bl / (9.6 * (ei beam defCtx))
+    
+     
+    
+    
+    
 
 ----------------------------------------------------------------------------------------
 ---------------------------------------- Moment ---------------------------------------- 
@@ -76,8 +129,10 @@ vccd beam m = 0.45 * z * bw * fcd' / 1000.0
 
 -- | Minimumsarmering lengdearmering
 minAs :: Beam -> Double -- ^ [mm2]
-minAs beam = 0.35 * (beamW beam) * (beamH beam) * myftk / C.fsk
+minAs beam = 0.35 * (beamW beam) * h * kw * myftk / C.fsk
     where myftk = M.ftk $ conc beam
+          h = beamH beam
+          kw = 1.5 - (h/1000.0)
 
 -- | Calc distance d form top concrete to centroid rebars area
 calcD :: Beam 

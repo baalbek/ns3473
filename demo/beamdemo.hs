@@ -17,6 +17,10 @@ conc = M.newConc "35"
 
 rebar = R.SingleRowBeamRebars (R.Rebar 12) 4 25
 
+rebar2 = R.MultiRowBeamRebars (R.Rebar 20) 9 2 25 (25 + 8)
+
+links = B.Link 8
+
 -- b = B.RectBeam 200 500 conc rebar (B.Link 8)
 
 
@@ -41,7 +45,16 @@ ccLinksCheck beam m v = do
 
 c = fromDiffList ((toDiffList [1,2,3,4]) <> (toDiffList [1,2,3]))
 
-b = B.defaultBeam 200 500 12
+b = B.defaultBeam 350 350 16 4
+
+dc = B.DeflectionContext 0.5 6200 
+
+dc2 = B.DeflectionContext 0.3 6200 
+
+b2 = B.RectBeam 350 500 conc rebar2 links
+
+xi = B.xiFact M.ee
+xi2 = B.xiFact M.eeLt
 
 displayResult :: (Bool,StringDL) -> IO ()
 displayResult r = do

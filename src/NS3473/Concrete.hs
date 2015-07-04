@@ -7,6 +7,7 @@ data Concrete  = Concrete {
                             fcn :: Double,
                             fcd :: Double,
                             ee  :: Double,    -- ^ Emodulus [N/mm2]
+                            eeLt :: Double,   -- ^ Long term emodulus [N/mm2]
                             mr  :: Double,    -- ^ Used in calculating ConcreteProfile::mcd = mr * b * d * d * fcd
                             alphad :: Double  -- ^ Used in calculating ConcreteProfile::z
                             } deriving Show
@@ -16,6 +17,9 @@ type Grade = String
 calcEe :: Double -> Double
 calcEe myFck = 9500.0 * myFck ** 0.3 
 
+calcEeLt :: Double -> Double
+calcEeLt myFck = (calcEe myFck) / (1 + 2.5)
+
 newConc :: String -> Concrete
 newConc "25" = Concrete { fck = 25,
                              ftk = 2.10,
@@ -23,6 +27,7 @@ newConc "25" = Concrete { fck = 25,
                              fcn = 16.8,
                              fcd = 12.0, 
                              ee  = calcEe 20,
+                             eeLt = calcEeLt 20,
                              mr  = 0.275,         
                              alphad = 0.165 }
 newConc "35" = Concrete { fck = 35,
@@ -31,6 +36,7 @@ newConc "35" = Concrete { fck = 35,
                              fcn = 22.4,
                              fcd = 16.0, 
                              ee  = calcEe 28,
+                             eeLt = calcEeLt 28,
                              mr  = 0.275,
                              alphad = 0.165 }
 
