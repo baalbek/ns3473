@@ -10,7 +10,8 @@ newtype Link = Link { diam :: Double } deriving Show
 data DeflectionContext = 
     DeflectionContext { 
         xi :: Double,      -- ^ Factor calculated from een, rho and xiFactor -> look-up in table
-        beamLen :: Double  -- ^ Beam span width [mm]
+        beamLen :: Double,  -- ^ Beam span width [mm]
+        u2s :: Double                -- ^ Ultimate limit to service limit factor
     } deriving Show
         
 
