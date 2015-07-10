@@ -7,12 +7,15 @@ import qualified NS3473.Rebars as R
 
 newtype Link = Link { diam :: Double } deriving Show
 
+type EeFn = (M.Concrete -> Double)
+
 data DeflectionContext = 
     DeflectionContext { 
-        xi :: Double,      -- ^ Factor calculated from een, rho and xiFactor -> look-up in table
+        xi :: Double,       -- ^ Factor calculated from een, rho and xiFactor -> look-up in table
         beamLen :: Double,  -- ^ Beam span width [mm]
-        u2s :: Double                -- ^ Ultimate limit to service limit factor
-    } deriving Show
+        u2s :: Double,      -- ^ Ultimate limit to service limit factor
+        eeFn :: EeFn 
+    } -- deriving Show
         
 
         
@@ -37,7 +40,6 @@ defaultBeam w h d numRebars = RectBeam w h myConc myRebar (Link 8)
     where myRebar = R.SingleRowBeamRebars (R.Rebar d) numRebars 25
           myConc = M.newConc "35" 
 
-type EeFn = (M.Concrete -> Double)
 
 ----------------------------------------------------------------------------------------
 ------------------------------------- Deflections -------------------------------------- 
@@ -67,10 +69,11 @@ xi1 x = ((-909.0909)*x**3) + (176.1364*x**2) + ((-13.4129)*x) + 1.0162
 xi2 :: Double -> Double
 xi2 x = ((-4.2559)*x**3) + (5.0684*x**2) + ((-2.4004)*x) + 0.76505
 
-calcXi :: Double -> Double    
-calcXi x = ((-7.7778)*x**3) + (7.50002*x**2) + ((-2.89365)*x) + 0.79357 
+--calcXi :: Double -> Double    
+--calcXi x = ((-7.7778)*x**3) + (7.50002*x**2) + ((-2.89365)*x) + 0.79357 
     
 -- | EI for calculating deflections
+{-
 ei2 :: Beam 
       -> DeflectionContext
       -> Double 
@@ -78,13 +81,17 @@ ei2 beam DeflectionContext { xi } =
     let steel = R.totalSteelArea (rebars beam)
         d = calcD beam in 
     C.esk * steel * d * d * xi 
+-}
 
 ei :: Beam 
+      -> DeflectionContext
       -> Double 
-ei beam  = 
+ei beam  DeflectionContext { eeFn } = 
     let steel = R.totalSteelArea (rebars beam)
         d = calcD beam 
-        xif = xiFact M.eeLt beam
+        xif = xiFact eeFn beam
+        calcXi | xif < 0.1 = xi1
+               | otherwise = xi2
         curXi = calcXi xif in 
     C.esk * steel * d * d * curXi 
 
@@ -92,10 +99,10 @@ deflection :: Beam
               -> DeflectionContext
               -> C.StaticMoment           -- ^ Moment [kNm]
               -> Double
-deflection beam defCtx m = 
+deflection beam ctx m = 
     let m' = m * 1000000.0 
-        bl = beamLen defCtx in
-    m' * bl * bl / (9.6 * (ei beam))
+        bl = beamLen ctx in
+    m' * bl * bl / (9.6 * (ei beam ctx))
     
 
 ---------------------------------------------------------------------------------------
