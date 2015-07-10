@@ -59,14 +59,34 @@ xiFact :: EeFn
           -> Double 
 xiFact ee beam = (een ee beam) * (rho beam) 
 
+-- | Calculate xi for xiFact < 0.1
+xi1 :: Double -> Double
+xi1 x = ((-909.0909)*x**3) + (176.1364*x**2) + ((-13.4129)*x) + 1.0162
+     
+-- | Calculate xi for xiFact >= 0.1
+xi2 :: Double -> Double
+xi2 x = ((-4.2559)*x**3) + (5.0684*x**2) + ((-2.4004)*x) + 0.76505
+
+calcXi :: Double -> Double    
+calcXi x = ((-7.7778)*x**3) + (7.50002*x**2) + ((-2.89365)*x) + 0.79357 
+    
 -- | EI for calculating deflections
-ei :: Beam 
+ei2 :: Beam 
       -> DeflectionContext
       -> Double 
-ei beam DeflectionContext { xi } = 
+ei2 beam DeflectionContext { xi } = 
     let steel = R.totalSteelArea (rebars beam)
         d = calcD beam in 
     C.esk * steel * d * d * xi 
+
+ei :: Beam 
+      -> Double 
+ei beam  = 
+    let steel = R.totalSteelArea (rebars beam)
+        d = calcD beam 
+        xif = xiFact M.eeLt beam
+        curXi = calcXi xif in 
+    C.esk * steel * d * d * curXi 
 
 deflection :: Beam 
               -> DeflectionContext
@@ -75,14 +95,10 @@ deflection :: Beam
 deflection beam defCtx m = 
     let m' = m * 1000000.0 
         bl = beamLen defCtx in
-    m' * bl * bl / (9.6 * (ei beam defCtx))
-    
-     
-    
-    
+    m' * bl * bl / (9.6 * (ei beam))
     
 
-----------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
 ---------------------------------------- Moment ---------------------------------------- 
 ----------------------------------------------------------------------------------------
 -- | Betongtverrsnittest momentkapasitet

@@ -17,7 +17,7 @@ conc = M.newConc "35"
 
 rebar = R.SingleRowBeamRebars (R.Rebar 12) 4 25
 
-rebar2 = R.MultiRowBeamRebars (R.Rebar 20) 9 2 25 (25 + 8)
+
 
 links = B.Link 8
 
@@ -47,11 +47,31 @@ c = fromDiffList ((toDiffList [1,2,3,4]) <> (toDiffList [1,2,3]))
 
 b = B.defaultBeam 350 350 16 4
 
-dc = B.DeflectionContext 0.5 6200 
-
-dc2 = B.DeflectionContext 0.3 6200 
-
+rebar2 = R.MultiRowBeamRebars (R.Rebar 20) 9 2 25 (25 + 8)
 b2 = B.RectBeam 350 500 conc rebar2 links
+
+rebar3 = R.SingleRowBeamRebars (R.Rebar 16) 12 (25 + 8)
+b3 = B.RectBeam 750 350 conc rebar3 links
+
+rebar4 = R.SingleRowBeamRebars (R.Rebar 16) 10 (25 + 8)
+
+dc :: Double -> B.DeflectionContext  
+dc xi = B.DeflectionContext xi 6200 
+
+b4 :: Double -> Double -> B.Beam
+b4 b h = B.RectBeam b h conc rebar4 links
+
+dc5 :: Double -> Double -> B.DeflectionContext  
+dc5 xi w = B.DeflectionContext xi w
+
+rebar5 n = R.SingleRowBeamRebars (R.Rebar 8) n (25 + 8)
+
+b5 :: Double -> Double -> B.Beam
+b5 h n = B.RectBeam 1000 h conc (rebar5 n) links
+
+rebar6 n = R.SingleRowBeamRebars (R.Rebar 16) n (25 + 8)
+b6 :: Double -> Double -> Double -> B.Beam
+b6 b h n = B.RectBeam b h conc (rebar6 n) links
 
 xi = B.xiFact M.ee
 xi2 = B.xiFact M.eeLt
