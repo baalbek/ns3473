@@ -14,11 +14,7 @@ import NS3473.DiffList (DiffList,toDiffList,fromDiffList)
 type StringDL = DiffList String 
 
 conc = M.newConc "35" 
-
 rebar = R.SingleRowBeamRebars (R.Rebar 12) 4 25
-
-
-
 links = B.Link 8
 
 -- b = B.RectBeam 200 500 conc rebar (B.Link 8)

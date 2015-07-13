@@ -11,7 +11,7 @@ data RebarCollection =
     SingleRowBeamRebars {
         rebar :: Rebar,
         amount :: Double,   -- ^ Total amount of rebars
-        cover :: Double     -- ^ Overdekning [mm] + diameter bøyler
+        cover :: Double -- ^ Cover [mm] including diameter of links
     }
     -- | Rebars as laid out in beams with multiple rows
     | MultiRowBeamRebars {
@@ -25,14 +25,14 @@ data RebarCollection =
     | PlateRebars {
         rebar :: Rebar,
         cc :: Double,   -- ^ Vertical center distance between rebars [mm]
-        cover :: Double -- ^ Overdekning [mm]
+        cover :: Double -- ^ Cover [mm] including diameter of links
     }
     | SingleWallRebars {
         rebar :: Rebar,  -- ^ Vertical rebars,
         ccVert :: Double,    -- ^ Vertical center distance 
         horizRebar :: Rebar, -- ^ Horizontal rebars,
         ccHoriz :: Double,    -- ^ Horizontal center distance 
-        cover :: Double      -- ^ Overdekning [mm]
+        cover :: Double -- ^ Cover [mm] including diameter of links
     }
     -- | The rebar is laid out on both sides with center distance = cc.
     --   I.e. the total number of rebars pr. meter is: 2 * (1000.0 / cc)
@@ -41,12 +41,12 @@ data RebarCollection =
         ccVert :: Double,    -- ^ Vertical center distance 
         horizRebar :: Rebar, -- ^ Horizontal rebars,
         ccHoriz :: Double,    -- ^ Horizontal center distance 
-        cover :: Double      -- ^ Overdekning [mm]
+        cover :: Double -- ^ Cover [mm] including diameter of links
     }
     | ColumnRebars {
         rebar :: Rebar,
         amount :: Double,   -- ^ Amount of rebars on one column side
-        cover :: Double     -- ^ Cover [mm]
+        cover :: Double -- ^ Cover [mm] including diameter of links
     } deriving Show
 
 -- | Calculates total steel area for BeamRebars and ColumnRebars, or total pr 1000 mm for PlateRebars

@@ -14,7 +14,8 @@ data DeflectionContext =
         xi :: Double,       -- ^ Factor calculated from een, rho and xiFactor -> look-up in table
         beamLen :: Double,  -- ^ Beam span width [mm]
         u2s :: Double,      -- ^ Ultimate limit to service limit factor
-        eeFn :: EeFn 
+        eeFn :: EeFn,       -- ^ Emodulus function 
+        k :: Double         -- ^ Factor given geometry, degrees of freedom etc
     } -- deriving Show
         
 
@@ -27,6 +28,15 @@ data Beam =
         conc   :: M.Concrete,           -- ^ Betong
         rebars :: R.RebarCollection,    -- ^ Armering
         links  :: Link                  -- ^ Bøylearmering
+    }
+    | TProfile {
+        beamW  :: Double,               -- ^ Tverrsnittsbredde
+        beamH  :: Double,               -- ^ Tverrsnittshoyde
+        conc   :: M.Concrete,           -- ^ Betong
+        rebars :: R.RebarCollection,    -- ^ Armering
+        links  :: Link,                  -- ^ Bøylearmering
+        beamWT :: Double,
+        beamHT :: Double
     } deriving Show
 
 
@@ -47,7 +57,7 @@ defaultBeam w h d numRebars = RectBeam w h myConc myRebar (Link 8)
 --
 -- | Ratio of emodulus of concrete to emodulus of steel
 een :: EeFn -> Beam -> Double
-een ee RectBeam { conc } = C.esk / (ee conc) 
+een ee beam = C.esk / (ee (conc beam)) 
 
 -- | Ratio of concrete area to steel area of tensile rebars
 rho :: Beam -> Double
@@ -69,20 +79,6 @@ xi1 x = ((-909.0909)*x**3) + (176.1364*x**2) + ((-13.4129)*x) + 1.0162
 xi2 :: Double -> Double
 xi2 x = ((-4.2559)*x**3) + (5.0684*x**2) + ((-2.4004)*x) + 0.76505
 
---calcXi :: Double -> Double    
---calcXi x = ((-7.7778)*x**3) + (7.50002*x**2) + ((-2.89365)*x) + 0.79357 
-    
--- | EI for calculating deflections
-{-
-ei2 :: Beam 
-      -> DeflectionContext
-      -> Double 
-ei2 beam DeflectionContext { xi } = 
-    let steel = R.totalSteelArea (rebars beam)
-        d = calcD beam in 
-    C.esk * steel * d * d * xi 
--}
-
 ei :: Beam 
       -> DeflectionContext
       -> Double 
@@ -102,7 +98,7 @@ deflection :: Beam
 deflection beam ctx m = 
     let m' = m * 1000000.0 
         bl = beamLen ctx in
-    m' * bl * bl / (9.6 * (ei beam ctx))
+    m' * bl * bl / ((k ctx) * (ei beam ctx))
     
 
 ---------------------------------------------------------------------------------------
@@ -111,7 +107,16 @@ deflection beam ctx m =
 -- | Betongtverrsnittest momentkapasitet
 mcd :: Beam 
        -> Double -- ^ [kNm]
-mcd beam = M.mcd (conc beam) (beamW beam) (calcD beam)
+mcd beam@RectBeam { conc,beamW } = M.mcd conc beamW (calcD beam)
+mcd beam@TProfile { conc,beamW,beamWT,beamHT } = 
+    let d' = calcD beam
+        ht' = 0.35*d' 
+        stegOk = beamHT > ht'
+        totalW = 2*beamWT + beamW in 
+    case stegOk of True -> M.mcd conc beamW d'
+                   False -> (totalW * beamHT * (M.fcd conc) * (d' - (beamHT/2.0))) / 1000000.0
+
+    
 
 -- | Dimensjonerende armering for boyemoment
 mfAs :: Beam 
@@ -167,12 +172,19 @@ calcD beam = (beamH beam) - d'
 calcZ :: Beam 
          -> C.StaticMoment   -- ^ [kNm] 
          -> Double           -- ^ [mm]
-calcZ beam m | m > 0 = (1.0 - (alphad'*f1)) * d'
+calcZ beam@RectBeam { conc } m | m > 0 = (1.0 - (alphad'*f1)) * d'
              | otherwise = 0.9 * d'
     where d' = (calcD beam)
-          alphad' = M.alphad $ conc beam 
+          alphad' = M.alphad conc 
           mcd' =  mcd beam 
           f1 = m / mcd'
+calcZ beam@TProfile { conc,beamHT } m = d' - (beamHT/2.0) 
+    where d' = (calcD beam)
+
+flangeDratio :: Beam 
+                -> Double
+flangeDratio beam@TProfile { beamHT } = 
+    beamHT / (calcD beam)
 
 ----------------------------------------------------------------------------------------
 ---------------------------------------- Bøyler ---------------------------------------- 
