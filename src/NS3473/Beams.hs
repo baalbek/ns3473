@@ -4,6 +4,7 @@ module NS3473.Beams where
 import qualified NS3473.Common as C
 import qualified NS3473.Concrete as M
 import qualified NS3473.Rebars as R
+import qualified NS3473.Cracking as CR
 
 newtype Link = Link { diam :: Double } deriving Show
 
@@ -39,6 +40,8 @@ data Beam =
         beamHT :: Double
     } deriving Show
 
+instance CR.Crackable Beam where
+    kt b = 1.0
 
 -- | Standard beam with C35 concrete, and 8 mm links
 defaultBeam :: Double     -- ^ Bjelkebredde   [mm]

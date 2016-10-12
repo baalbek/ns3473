@@ -3,6 +3,7 @@ module NS3473.Concrete where
 data Concrete  = Concrete {
                             fck :: Double,
                             ftk :: Double,
+                            ftn :: Double,
                             ftd :: Double,
                             fcn :: Double,
                             fcd :: Double,
@@ -14,8 +15,9 @@ data Concrete  = Concrete {
 
 type Grade = String
 
-calcEe :: Double -> Double
-calcEe myFck = 9500.0 * myFck ** 0.3 
+calcEe :: Double      -- ^ fcck 
+          -> Double
+calcEe myFcck = 9500.0 * myFcck ** 0.3 
 
 calcEeLt :: Double -> Double
 calcEeLt myFck = (calcEe myFck) / (1 + 2.5)
@@ -23,6 +25,7 @@ calcEeLt myFck = (calcEe myFck) / (1 + 2.5)
 newConc :: String -> Concrete
 newConc "25" = Concrete { fck = 25,
                              ftk = 2.10,
+                             ftn = 1.40,
                              ftd = 1.00,
                              fcn = 16.8,
                              fcd = 12.0, 
@@ -32,11 +35,22 @@ newConc "25" = Concrete { fck = 25,
                              alphad = 0.165 }
 newConc "35" = Concrete { fck = 35,
                              ftk = 2.55,
+                             ftn = 1.70,
                              ftd = 1.21,
                              fcn = 22.4,
                              fcd = 16.0, 
                              ee  = calcEe 28,
                              eeLt = calcEeLt 28,
+                             mr  = 0.275,
+                             alphad = 0.165 }
+newConc "45" = Concrete { fck = 45,
+                             ftk = 2.95,
+                             ftn = 2.00,
+                             ftd = 1.43,
+                             fcn = 28.0,
+                             fcd = 20.0, 
+                             ee  = calcEe 36,
+                             eeLt = calcEeLt 36,
                              mr  = 0.275,
                              alphad = 0.165 }
 
