@@ -24,7 +24,7 @@ data RebarCollection =
     -- | Rebars as laid out in floors and foundations 
     | PlateRebars {
         rebar :: Rebar,
-        cc :: Double,   -- ^ Vertical center distance between rebars [mm]
+        cc :: Double,   -- ^ Horizontal center distance between rebars [mm]
         cover :: Double -- ^ Cover [mm] including diameter of links
     }
     | SingleWallRebars {

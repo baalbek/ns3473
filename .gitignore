@@ -2,3 +2,8 @@
 tmp/
 *.ods#
 dist/
+.cabal-sandbox/
+src/demo
+src/ghci-sandbox
+cabal.sandbox.config
+

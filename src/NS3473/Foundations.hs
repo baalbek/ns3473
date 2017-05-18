@@ -35,6 +35,10 @@ data Foundation =
         }
         deriving Show
 
+areaQ :: Foundation 
+         -> Double      -- ^ Load, kN 
+         -> C.Load      -- ^ kN/m2
+areaQ SquareFoundation { fundB } load = load * 1000000 / (fundB*fundB)
 ----------------------------------------------------------------------------------------
 ------------------------------------ Skjær ---------------------------------------------
 ----------------------------------------------------------------------------------------
@@ -150,7 +154,7 @@ vccd' fcd' bw' d' = result / 1000.0
           vccd2 = 0.45 * fcd' * bw' * 0.9 * d' 
           result = min vccd1 vccd2 
 
--- | NS 3473 12.3.2.5, kapasitet for trykkbrukk.
+-- | NS 3473 12.3.2.5, kapasitet for trykkbrudd
 vccd :: Foundation 
         -> FoundationResult -- ^ [kN]
 vccd fund = OneFr $ vccd' (M.fcd $ conc fund) (bw fund) (calcD fund)  
